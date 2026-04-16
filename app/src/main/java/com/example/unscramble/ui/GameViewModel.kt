@@ -27,11 +27,27 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
+import com.example.unscramble.data.WordDao
 
 /**
  * ViewModel containing the app data and methods to process the data
  */
-class GameViewModel : ViewModel() {
+class GameViewModel (
+    private val dao: WordDao
+) : ViewModel() {
+
+    private var customWords: List<String> = emptyList()
+
+    private fun loadWords() {
+        viewModelScope.launch {
+            dao.getAllWords().collect { list ->
+                customWords = list.map { it.word }
+                resetGame()
+            }
+        }
+    }
 
     // Game UI state
     private val _uiState = MutableStateFlow(GameUiState())
@@ -45,7 +61,7 @@ class GameViewModel : ViewModel() {
     private lateinit var currentWord: String
 
     init {
-        resetGame()
+        loadWords()
     }
 
     /*
@@ -131,7 +147,8 @@ class GameViewModel : ViewModel() {
 
     private fun pickRandomWordAndShuffle(): String {
         // Continue picking up a new random word until you get one that hasn't been used before
-        currentWord = allWords.random()
+        val combinedWords = allWords + customWords
+        currentWord = combinedWords.random()
         return if (usedWords.contains(currentWord)) {
             pickRandomWordAndShuffle()
         } else {
