@@ -57,11 +57,17 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.unscramble.R
 import com.example.unscramble.ui.theme.UnscrambleTheme
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.*
 
 @Composable
 fun GameScreen(gameViewModel: GameViewModel = viewModel()) {
     val gameUiState by gameViewModel.uiState.collectAsState()
     val mediumPadding = dimensionResource(R.dimen.padding_medium)
+
+    var showDialog by remember { mutableStateOf(false) }
+    var newWord by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier
@@ -107,6 +113,13 @@ fun GameScreen(gameViewModel: GameViewModel = viewModel()) {
                 )
             }
 
+            Button(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = { showDialog = true }
+            ) {
+                Text("Tambah Kata")
+            }
+
             OutlinedButton(
                 onClick = { gameViewModel.skipWord() },
                 modifier = Modifier.fillMaxWidth()
@@ -124,6 +137,43 @@ fun GameScreen(gameViewModel: GameViewModel = viewModel()) {
             FinalScoreDialog(
                 score = gameUiState.score,
                 onPlayAgain = { gameViewModel.resetGame() }
+            )
+        }
+
+        if (showDialog) {
+            AlertDialog(
+                onDismissRequest = { showDialog = false },
+                title = { Text("Tambah Kata Baru") },
+                text = {
+                    OutlinedTextField(
+                        value = newWord,
+                        onValueChange = { newWord = it },
+                        label = { Text("Masukkan kata") }
+                    )
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            if (newWord.isNotBlank()) {
+                                gameViewModel.insertWord(newWord)
+
+                                gameViewModel.resetGame()
+
+                                newWord = ""
+                                showDialog = false
+                            }
+                        }
+                    ) {
+                        Text("Simpan")
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = { showDialog = false }
+                    ) {
+                        Text("Batal")
+                    }
+                }
             )
         }
     }

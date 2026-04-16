@@ -30,6 +30,8 @@ import kotlinx.coroutines.flow.update
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import com.example.unscramble.data.WordDao
+import com.example.unscramble.data.WordEntity
+import kotlinx.coroutines.flow.map
 
 /**
  * ViewModel containing the app data and methods to process the data
@@ -44,7 +46,32 @@ class GameViewModel (
         viewModelScope.launch {
             dao.getAllWords().collect { list ->
                 customWords = list.map { it.word }
-                resetGame()
+                if (customWords.isNotEmpty()) {
+                    resetGame()
+                }
+            }
+        }
+    }
+
+    fun insertWord(word: String) {
+        viewModelScope.launch {
+            dao.insert(WordEntity(word = word))
+
+            customWords = customWords + word
+            currentWord = word
+            _uiState.value = GameUiState(
+                currentScrambledWord = shuffleCurrentWord(word)
+            )
+        }
+    }
+
+    fun tambahKata(kata: String) {
+        if (kata.isNotBlank()) {
+            viewModelScope.launch {
+                dao.insert(WordEntity(word = kata))
+
+                customWords = customWords + kata
+
             }
         }
     }
@@ -146,9 +173,15 @@ class GameViewModel (
     }
 
     private fun pickRandomWordAndShuffle(): String {
-        // Continue picking up a new random word until you get one that hasn't been used before
-        val combinedWords = allWords + customWords
+
+        if (customWords.isNotEmpty()) {
+            currentWord = customWords.last()
+            return shuffleCurrentWord(currentWord)
+        }
+
+        val combinedWords = allWords
         currentWord = combinedWords.random()
+
         return if (usedWords.contains(currentWord)) {
             pickRandomWordAndShuffle()
         } else {
