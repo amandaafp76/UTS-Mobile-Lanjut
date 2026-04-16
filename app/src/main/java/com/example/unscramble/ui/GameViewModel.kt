@@ -102,7 +102,7 @@ class GameViewModel (
     /*
      * Update the user's guess
      */
-    fun updateUserGuess(guessedWord: String){
+    fun updateUserGuess(guessedWord: String) {
         userGuess = guessedWord
     }
 
@@ -140,7 +140,7 @@ class GameViewModel (
      * current game state.
      */
     private fun updateGameState(updatedScore: Int) {
-        if (usedWords.size == MAX_NO_OF_WORDS){
+        if (usedWords.size == MAX_NO_OF_WORDS) {
             //Last round in the game, update isGameOver to true, don't pick a new word
             _uiState.update { currentState ->
                 currentState.copy(
@@ -149,7 +149,7 @@ class GameViewModel (
                     isGameOver = true
                 )
             }
-        } else{
+        } else {
             // Normal round in the game
             _uiState.update { currentState ->
                 currentState.copy(
@@ -175,7 +175,10 @@ class GameViewModel (
     private fun pickRandomWordAndShuffle(): String {
 
         if (customWords.isNotEmpty()) {
-            currentWord = customWords.last()
+            val newWord = customWords.last()
+            customWords = customWords.dropLast(1)
+
+            currentWord = newWord
             return shuffleCurrentWord(currentWord)
         }
 
